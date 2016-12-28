@@ -1,59 +1,39 @@
 import React, { Component } from 'react'
-import superagent from 'superagent'
 
+import utils from '../../utils'
+import { Comment, CreateComment } from '../presentation'
 import styleSheet from '../style' 
-
-import Comment from '../presentation/Comment'
 
 class Comments extends Component {
 
     constructor() {
         super()
         this.state = {
-            list: [],
-            comment: {
-                username: '',
-                body: '',
-            }
+            list: []
         }
     }
 
     componentDidMount() {
-        superagent
-        .get('/api/comment')
-        .query(null)
-        .set('Accept', 'application/json')
-        .end((err, res) => {
-            if (err) {
-                alert(`Error: ${err}`)
+        utils.API.get('comment', null, (err, res) => {
+            if(err) {
+                console.log(`Error: ${JSON.stringify(err)}`)
             }
             this.setState({
-                list: res.body.results
-            })
-        }) 
-    }
-
-    submitComment() {
-        let updatedList = Object.assign([], this.state.list)
-        updatedList.push(this.state.comment)
-        superagent
-        .post("/api/comment")
-        .send(this.state.comment)
-        .end((err, res) => {
-            if (err) {
-                alert(`Error: ${err}`)
-            }
-            this.setState({
-                list: updatedList
+                list: res.results
             })
         })
     }
 
-    updateComment(event) {
-        let updatedComment = Object.assign({}, this.state.comment)
-        updatedComment[event.target.id] = event.target.value
-        this.setState({
-            comment: updatedComment
+    submitComment(comment) {
+        utils.API.post('comment', comment, (err, res) => {
+            if(err) {
+                console.log(`Error: ${JSON.stringify(err)}`)
+            }
+            let updatedList = Object.assign([], this.state.list)
+            updatedList.push(res.result)
+            this.setState({
+                list: updatedList
+            })
         })
     }
 
@@ -66,14 +46,11 @@ class Comments extends Component {
         })
         return (
             <div>
-                <h2>Comments: Zone 1</h2>
                 <div style={style.commentsBox}>
 
                     <ul style={style.commentsList}>{listItems}</ul>
 
-                    <input id="username" onChange={this.updateComment.bind(this)} className="form-control" type="text" placeholder="Username" /><br />
-                    <input id="body" onChange={this.updateComment.bind(this)} className="form-control" type="text" placeholder="Comment" /><br />
-                    <button className="btn btn-info" onClick={this.submitComment.bind(this)}>Submit Comment</button>
+                    <CreateComment onCreate={this.submitComment.bind(this)}/>
 
                 </div>
             </div>
